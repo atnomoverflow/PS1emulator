@@ -344,9 +344,9 @@ struct CPU
 		inter=i;
 		for(int i=1;i<32;i++)
 		{
-			regs.at(i)=0xdeadbeef;
+			regs[i]=0xdeadbeef;
 		}
-		regs.at(0)=0;
+		regs[0]=0;
 		regs_out=regs;
 		RegisterIndex* r0=new RegisterIndex(0);
 		load={r0,0};
@@ -355,12 +355,12 @@ struct CPU
 	}
 	uint32_t reg(RegisterIndex* index)
 	{
-		return regs.at((size_t)(index->index));
+		return regs[(size_t)(index->index)];
 	}
 	void set_reg(RegisterIndex* index,uint32_t val)
 	{
-		regs_out.at((size_t)(index->index))=val;
-		regs_out.at(0)=0;
+		regs_out[(size_t)(index->index)]=val;
+		regs_out[0]=0;
 	}
 	void store8(uint32_t addr,uint8_t val)
 	{
@@ -412,8 +412,11 @@ struct CPU
 	void op_jr(Instruction* ins)
 	{
 		RegisterIndex* s=ins->s();
-		std::cout <<"jr 0x"<<s->index;
+		std::cout <<"jr 0x"<<s->index<<std::endl;
+		//std::cout <<"PC before change "<<PC<<std::endl;
 		PC=reg(s);
+		std::cout <<"reg[0x1f]="<<regs[0x1f]<<std::endl;
+		
 
 	}
 	///store byte
@@ -448,9 +451,9 @@ struct CPU
 	///Jump and link
 	void op_jal(Instruction* ins)
 	{
-		regs_out.at(0x1f)=PC+4;
-		std::cout <<"jal 0x"<<PC<<std::endl;
-		std::cout<<"PC="<<PC<<std::endl;
+		std::cout <<"before changing the value $ra=0x"<<regs_out[0x1f]<<std::endl;
+		regs_out[0x1f]=PC+4;
+		std::cout <<"after changing the value $ra=0x"<<regs_out[0x1f]<<std::endl;
 		exit(0);
 		op_j(ins);
 	}
@@ -561,7 +564,27 @@ struct CPU
 
 		switch (cop_r)
 		{
-		case 3|5|6|7|9|11:
+		case 3:
+			std::cout << "unhandeled_write_cop0_register";
+			
+			break;
+		case 5:
+			std::cout << "unhandeled_write_cop0_register";
+			
+			break;
+		case 6:
+			std::cout << "unhandeled_write_cop0_register";
+			
+			break;
+		case 7:
+			std::cout << "unhandeled_write_cop0_register";
+			
+			break;
+		case 9:
+			std::cout << "unhandeled_write_cop0_register";
+			
+			break;
+		case 11:
 			std::cout << "unhandeled_write_cop0_register";
 			
 			break;
@@ -652,8 +675,6 @@ struct CPU
 		uint32_t v=reg(t);
 
 		std::cout <<"sw 0x"<<t->index<<",0x"<<i<<"("<<s->index<<")"<<std::endl;
-		
-		
 		stor32(addr,v);
 	}
 	///Bitwise or immediate
@@ -756,15 +777,15 @@ struct CPU
 	}
 	void run_next_ins()
 	{
-		RegisterIndex* tempRegIndex;
-		uint32_t val;
-		std::tie(tempRegIndex,val)=load;
-		set_reg(tempRegIndex,val);
-		load={new RegisterIndex(),0};
+		
+		
 		Instruction* ins=next_instruction;
 		next_instruction=new Instruction(Load32bit(PC));
-		std::cout <<"PC="<<PC<<"0x"<<std::hex<<ins->OP<<"/0x"<<std::hex<<ins->function()<<"/0x"<<std::hex<<ins->subfunction()<<std::endl;
+		std::cout <<"PC=0x"<<PC<<"/0x"<<std::hex<<ins->OP<<"/0x"<<std::hex<<ins->function()<<"/0x"<<std::hex<<ins->subfunction()<<std::endl;
+		
 		PC+=4;
+		regs_out[std::get<0>(load)->index]=std::get<1>(load);
+		load={new RegisterIndex(),0};
 		decode_and_execute(ins);
 		regs=regs_out;
 	}
